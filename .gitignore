@@ -1,0 +1,22 @@
+# IDE
+.idea/
+*.iml
+
+# OS
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# Build (future Java/Maven)
+target/
+*.class
+*.jar
+*.war
+*.ear
+hs_err_pid*
+replay_pid*
+
+# Logs & local env
+*.log
+.env
+.env.local

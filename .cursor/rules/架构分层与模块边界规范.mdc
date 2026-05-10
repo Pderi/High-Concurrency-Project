@@ -1,0 +1,27 @@
+---
+description: 强制执行项目分层架构和跨模块边界规范
+alwaysApply: true
+---
+
+# 架构分层与模块边界规范
+
+## 模块结构
+- 使用 Maven 多模块：`{module}-api`（契约）+ `{module}-server`（实现）。
+- `api` 模块只放接口、常量、枚举、DTO，不依赖实现层。
+- `server` 模块负责控制器、服务、数据访问、配置实现。
+
+## 分层职责
+- 严格遵循：`Controller -> Service -> DAL`。
+- `Controller` 只处理请求接入、参数校验、权限、统一响应。
+- `Service` 只处理业务规则、事务、编排，不处理 HTTP 细节。
+- `DAL` 只处理持久化与查询，不承载业务编排。
+
+## 控制器约束
+- 禁止在 `Controller` 写业务逻辑。
+- 禁止在 `Controller` 直接调用 `Mapper`。
+- 管理端和用户端接口必须分离：`controller/admin` 与 `controller/app`。
+
+## 跨模块调用
+- 只允许依赖其他模块的 `*-api` 接口。
+- 禁止跨模块依赖 `*ServiceImpl` 等实现类。
+- 跨模块调用需处理异常并转换为业务错误码。

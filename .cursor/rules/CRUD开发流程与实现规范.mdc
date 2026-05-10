@@ -1,0 +1,33 @@
+---
+description: 统一 CRUD 开发流程、VO 设计和 Service 实现规范
+alwaysApply: true
+---
+
+# CRUD开发流程与实现规范
+
+## 开发顺序（必须遵守）
+- 按顺序执行：需求确认 -> DO/枚举 -> Mapper -> VO -> Controller -> Service -> 错误码 -> 自测检查。
+- 先确认字段、关系、功能范围，禁止凭空扩展需求字段。
+
+## VO 规范
+- 标准 VO：`AddReqVO`、`UpdateReqVO`、`PageReqVO`、`RespVO`、`PageRespVO`。
+- `AddReqVO` 禁止包含 `id`；`UpdateReqVO` 必须包含 `id`。
+- 查询 VO 继承分页基类；字段与 DO 尽量一致。
+- 所有请求字段使用 JSR-303 注解和清晰注释。
+
+## Service 规范
+- 删除/更新前必须校验存在性（如 `validateXxxExists()`）。
+- 统一使用 `BeanUtils.toBean()` 做对象转换。
+- 复杂写操作加 `@Transactional(rollbackFor = Exception.class)`。
+- 禁止在 Service 层处理 HTTP 相关逻辑。
+
+## Mapper 规范
+- 分页查询只使用 `PageReqVO` 中存在的字段。
+- 使用 `LambdaQueryWrapperX` + `*IfPresent` 系列方法。
+- 必须显式设置排序（通常按 `id` 或 `createTime` 倒序）。
+- 避免 N+1 查询，优先批量查询与映射组装。
+
+## 错误码与响应
+- 在 `{module}-api/constants/ErrorCodeConstants` 统一定义错误码。
+- 至少包含 `XXX_NOT_EXISTS` 等基础业务错误码。
+- 接口返回统一结果包装，不返回裸对象。

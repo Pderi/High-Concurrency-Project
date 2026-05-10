@@ -1,0 +1,30 @@
+---
+description: 统一命名规范与数据库设计约束
+alwaysApply: true
+---
+
+# 命名与数据库设计规范
+
+## 类与方法命名
+- 使用统一命名：`{Domain}Service`、`{Domain}ServiceImpl`、`{Domain}Mapper`、`{Domain}DO`。
+- VO 命名：`{Domain}AddReqVO`、`{Domain}UpdateReqVO`、`{Domain}PageReqVO`、`{Domain}RespVO`、`{Domain}PageRespVO`。
+- 方法命名统一：`create/update/delete/get/getPage/validateExists`。
+
+## 包结构命名
+- 按业务域纵向组织代码：`controller/{admin|app}/{domain}`、`service/{domain}`、`dal/{dataobject|mysql}/{domain}`。
+- VO 就近放置在对应 controller/domain/vo 下。
+
+## 数据库命名与字段
+- 表命名使用：`{module}_{domain}_{entity}`。
+- 字段采用下划线命名；状态字段统一 `status`；时间字段统一 `*_time`。
+- 金额字段统一使用整数分（`INT/BIGINT`），禁止直接用浮点存金额。
+
+## 公共字段与类型约定
+- 业务表应包含公共字段：`creator/create_time/updater/update_time/deleted/tenant_id`。
+- 主键使用 `BIGINT`；状态枚举使用 `TINYINT/INT`；时间使用 `DATETIME`。
+- DO 字段需有清晰注释，状态字段关联枚举。
+
+## 索引设计
+- 主键、业务唯一键、常用查询条件必须建索引。
+- 组合索引遵循最左匹配原则，避免过度建索引。
+- 分页和排序字段应纳入索引设计，避免全表扫描。
