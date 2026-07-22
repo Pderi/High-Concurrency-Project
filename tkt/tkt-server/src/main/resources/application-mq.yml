@@ -1,0 +1,13 @@
+# 本地启用 RocketMQ 示例：
+# java -jar tkt-server.jar --spring.profiles.active=mq
+#
+# 或在 IDE 中 Active profiles = mq
+
+rocketmq:
+  name-server: 127.0.0.1:9876
+  producer:
+    group: tkt-producer-group
+
+tkt:
+  rocketmq:
+    enabled: true

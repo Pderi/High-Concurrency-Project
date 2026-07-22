@@ -19,6 +19,8 @@
 - 跨模块调用：仅依赖 `*-api`，禁止直接依赖实现类。
 - CRUD规范：按 DO -> Mapper -> VO -> Controller -> Service -> 错误码流程执行。
 - 数据规范：金额用分（整数），主键 BIGINT，统一公共字段（creator/create_time/updater/update_time/deleted/tenant_id）。
+- 后端坐标：`groupId=com.hc.ticket`，包名 `com.hc.ticket.module.tkt`；启动类 `com.hc.ticket.TktServerApplication`。
+- 技术栈落地：Java 17 + Spring Boot 3.3.6 + MyBatis-Plus 3.5.9 + Redis + RocketMQ（默认关闭，profile `mq` 启用）。
 
 ## 4. 文档索引（docs）
 
@@ -39,7 +41,12 @@
 ### 4.3 数据库脚本
 1. `schema-ticket-mysql8.sql`
 
-### 4.4 运行记忆与纠错文档
+### 4.4 后端工程（代码）
+1. 根 `pom.xml`（多模块父工程）
+2. `tkt/tkt-api`：枚举、错误码、API 常量
+3. `tkt/tkt-server`：启动类、框架公共类、DO/Mapper、管理端 CRUD（演出/场次/票档 + 订单只读）、MQ/Job 骨架、探活接口
+
+### 4.5 运行记忆与纠错文档
 1. `MEMORY.md`
 2. `ERROR.md`
 
@@ -49,6 +56,8 @@
 - 若业务范围变更，优先更新“项目定位”“当前业务结论”和“文档索引”。
 
 ## 6. 最近更新记录
+- 2026-07-22：落地管理端 CRUD（Show/Session/Tier 增删改查分页；Order 只读详情+分页），遵循 `docs/CRUD开发流程规范.md`；补 `BeanUtils.toBean`、票档库存校验错误码 `TIER_STOCK_INVALID`。
+- 2026-07-22：落地后端脚手架（Java 17 / Spring Boot 3.3 / `tkt-api`+`tkt-server`）；含 DO/Mapper、错误码与枚举、RocketMQ 消费者骨架（默认关闭）、关单 Job 占位、探活接口；`mvn -DskipTests package` 通过。
 - 2026-05-10：初始化 Git 仓库并推送到远程 `git@github.com:Pderi/High-Concurrency-Project.git`（默认分支 `main`）；新增根目录 `.gitignore`（忽略 `.idea/` 与常见构建产物）。
 - 2026-05-10：新增 `docs/高并发能力地图与扩展架构-抢票票务平台.md`（能力地图 + 分库分表/微服务/一致性/MQ 扩展叙述），并更新本文档索引与项目定位中的扩展说明。
 - 2026-05-10：新增 Cursor 始终生效规则：`Agent工作流-命令前提示词优化.mdc`、`Agent工作流-质量优先与任务拆分.mdc`、`Agent工作流-方案确认后再编码.mdc`。

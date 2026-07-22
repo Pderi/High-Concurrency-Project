@@ -1,0 +1,70 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: tkt-server
+  datasource:
+    url: jdbc:mysql://127.0.0.1:3306/ticket?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&useSSL=false
+    username: root
+    password: root
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  data:
+    redis:
+      host: 127.0.0.1
+      port: 6379
+      database: 0
+  jackson:
+    time-zone: Asia/Shanghai
+    serialization:
+      write-dates-as-timestamps: false
+
+# 启用 MQ 时取消注释，并设置 tkt.rocketmq.enabled=true
+# rocketmq:
+#   name-server: 127.0.0.1:9876
+#   producer:
+#     group: tkt-producer-group
+
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.slf4j.Slf4jImpl
+  global-config:
+    db-config:
+      logic-delete-field: deleted
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+      id-type: auto
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
+tkt:
+  order:
+    pay-timeout-minutes: 15
+  grab:
+    async-poll-seconds: 1
+  job:
+    close-order:
+      batch-size: 100
+  cache:
+    tier-ttl-seconds: 60
+  rocketmq:
+    enabled: false
+
+logging:
+  level:
+    com.hc.ticket: INFO
+    com.hc.ticket.module.tkt.dal.mysql: DEBUG

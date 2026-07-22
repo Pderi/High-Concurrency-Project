@@ -24,6 +24,14 @@
 
 ## 4. 错误记录
 
+### [2026-07-22] MyBatis-Plus 3.5.9 分页插件类找不到
+- 场景：搭建 `tkt-server` 脚手架编译。
+- 错误现象：`PaginationInnerInterceptor` 找不到（`com.baomidou.mybatisplus.extension.plugins.inner`）。
+- 根因分析：MyBatis-Plus 3.5.9 起分页/拦截相关类拆至 `mybatis-plus-jsqlparser` 模块，仅引入 `mybatis-plus-spring-boot3-starter` 不够。
+- 修复动作：父 POM 与 `tkt-server` 增加 `mybatis-plus-jsqlparser` 依赖。
+- 预防措施（下次如何避免）：升级 MyBatis-Plus 后核对官方拆分模块说明；脚手架检查清单增加「分页插件依赖」。
+- 状态：已修复
+
 ### [2026-04-20] 初始建立错误日志
 - 场景：项目规范治理初始化。
 - 错误现象：暂无历史错误沉淀文档，无法形成可复用的纠错闭环。
@@ -37,3 +45,4 @@
 - [ ] 输出是否与已定业务边界一致（首期无选座、模拟支付）
 - [ ] 文档路径与索引是否同步更新
 - [ ] 是否出现了与规则冲突的表达或结构
+- [ ] MyBatis-Plus >=3.5.9 是否已引入 `mybatis-plus-jsqlparser`（分页/乐观锁拦截器）
