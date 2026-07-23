@@ -24,3 +24,5 @@ bin/
 *.log
 .env
 .env.local
+**/application-local.yml
+**/application-*.yml.local

@@ -29,4 +29,11 @@ public interface ErrorCodeConstants {
 
     // ========== 电子票 1_010_006_xxx ==========
     ErrorCode TICKET_NOT_EXISTS = new ErrorCode(1_010_006_000, "电子票不存在");
+
+    // ========== 抢票受理 1_010_007_xxx ==========
+    ErrorCode GRAB_RESULT_NOT_EXISTS = new ErrorCode(1_010_007_000, "抢票受理结果不存在或已过期");
+    ErrorCode GRAB_QUANTITY_INVALID = new ErrorCode(1_010_007_001, "购买数量不合法");
+    ErrorCode USER_ID_REQUIRED = new ErrorCode(1_010_007_002, "用户未登录");
+    ErrorCode REDIS_STOCK_NOT_READY = new ErrorCode(1_010_007_003, "库存缓存未就绪，请稍后重试");
+    ErrorCode ORDER_CREATE_FAILED = new ErrorCode(1_010_007_004, "建单失败，库存已回补");
 }

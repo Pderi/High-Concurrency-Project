@@ -2,6 +2,7 @@ package com.hc.ticket.module.tkt.service.tier;
 
 import com.hc.ticket.framework.common.pojo.PageResult;
 import com.hc.ticket.framework.common.util.object.BeanUtils;
+import com.hc.ticket.module.tkt.cache.TktMetaCache;
 import com.hc.ticket.module.tkt.controller.admin.tier.vo.TierAddReqVO;
 import com.hc.ticket.module.tkt.controller.admin.tier.vo.TierPageReqVO;
 import com.hc.ticket.module.tkt.controller.admin.tier.vo.TierPageRespVO;
@@ -26,6 +27,8 @@ public class TierServiceImpl implements TierService {
     private TierMapper tierMapper;
     @Resource
     private SessionService sessionService;
+    @Resource
+    private TktMetaCache tktMetaCache;
 
     @Override
     public Long createTier(TierAddReqVO reqVO) {
@@ -40,12 +43,18 @@ public class TierServiceImpl implements TierService {
             tier.setTenantId(0L);
         }
         tierMapper.insert(tier);
+        tktMetaCache.refreshTier(tier.getId());
+        sessionService.clearAppSessionDetailCache(reqVO.getSessionId());
         return tier.getId();
     }
 
     @Override
     public void updateTier(TierUpdateReqVO reqVO) {
-        TierDO exists = validateTierExists(reqVO.getId());
+        // 需要准确 soldStock，管理端读库（元数据缓存不含 sold/version）
+        TierDO exists = tierMapper.selectById(reqVO.getId());
+        if (exists == null) {
+            throw exception(TIER_NOT_EXISTS);
+        }
         sessionService.validateSessionExists(reqVO.getSessionId());
         if (reqVO.getTotalStock() < exists.getSoldStock()) {
             throw exception(TIER_STOCK_INVALID);
@@ -55,17 +64,29 @@ public class TierServiceImpl implements TierService {
         updateObj.setSoldStock(null);
         updateObj.setVersion(null);
         tierMapper.updateById(updateObj);
+        tktMetaCache.refreshTier(reqVO.getId());
+        sessionService.clearAppSessionDetailCache(reqVO.getSessionId());
+        if (!exists.getSessionId().equals(reqVO.getSessionId())) {
+            sessionService.clearAppSessionDetailCache(exists.getSessionId());
+        }
     }
 
     @Override
     public void deleteTier(Long id) {
-        validateTierExists(id);
+        TierDO exists = validateTierExists(id);
         tierMapper.deleteById(id);
+        tktMetaCache.evictTier(id);
+        sessionService.clearAppSessionDetailCache(exists.getSessionId());
     }
 
     @Override
     public TierRespVO getTier(Long id) {
-        return BeanUtils.toBean(validateTierExists(id), TierRespVO.class);
+        // 管理端详情需 soldStock，直查 DB
+        TierDO tier = tierMapper.selectById(id);
+        if (tier == null) {
+            throw exception(TIER_NOT_EXISTS);
+        }
+        return BeanUtils.toBean(tier, TierRespVO.class);
     }
 
     @Override
@@ -75,7 +96,7 @@ public class TierServiceImpl implements TierService {
 
     @Override
     public TierDO validateTierExists(Long id) {
-        TierDO tier = tierMapper.selectById(id);
+        TierDO tier = tktMetaCache.getTier(id);
         if (tier == null) {
             throw exception(TIER_NOT_EXISTS);
         }

@@ -1,30 +1,21 @@
-package com.hc.ticket.module.tkt.mq.consumer;
+package com.hc.ticket.module.tkt.mq.producer;
 
 import com.hc.ticket.framework.common.exception.ServiceException;
-import com.hc.ticket.module.tkt.constants.ApiConstants;
 import com.hc.ticket.module.tkt.mq.message.OrderCreateMessage;
 import com.hc.ticket.module.tkt.service.order.CreateOrderResult;
 import com.hc.ticket.module.tkt.service.order.GrabResultService;
 import com.hc.ticket.module.tkt.service.order.OrderCreateService;
 import com.hc.ticket.module.tkt.service.stock.TierStockRedisService;
 import jakarta.annotation.Resource;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
-import org.apache.rocketmq.spring.core.RocketMQListener;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 /**
- * 异步建单消费者
+ * MQ 关闭时：进程内同步建单（便于本地联调）
  */
-@Slf4j
 @Component
-@ConditionalOnProperty(prefix = "tkt.rocketmq", name = "enabled", havingValue = "true")
-@RocketMQMessageListener(
-        topic = ApiConstants.TOPIC_ORDER_CREATE,
-        consumerGroup = ApiConstants.CONSUMER_GROUP_ORDER_CREATE
-)
-public class OrderCreateConsumer implements RocketMQListener<OrderCreateMessage> {
+@ConditionalOnProperty(prefix = "tkt.rocketmq", name = "enabled", havingValue = "false", matchIfMissing = true)
+public class SyncOrderCreatePublisher implements OrderCreatePublisher {
 
     @Resource
     private OrderCreateService orderCreateService;
@@ -34,9 +25,7 @@ public class OrderCreateConsumer implements RocketMQListener<OrderCreateMessage>
     private TierStockRedisService tierStockRedisService;
 
     @Override
-    public void onMessage(OrderCreateMessage message) {
-        log.info("[OrderCreateConsumer] messageId={}, userId={}, tierId={}, quantity={}",
-                message.getMessageId(), message.getUserId(), message.getTierId(), message.getQuantity());
+    public void publish(OrderCreateMessage message) {
         try {
             CreateOrderResult result = orderCreateService.createOrder(message);
             if (result.isRollbackRedis()) {

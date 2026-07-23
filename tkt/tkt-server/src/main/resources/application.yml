@@ -56,11 +56,12 @@ tkt:
     pay-timeout-minutes: 15
   grab:
     async-poll-seconds: 1
+    result-ttl-minutes: 30
   job:
     close-order:
       batch-size: 100
   cache:
-    tier-ttl-seconds: 60
+    meta-ttl-seconds: 604800
   rocketmq:
     enabled: false
 

@@ -28,6 +28,8 @@ public class TktProperties {
     public static class Grab {
         /** 客户端轮询间隔建议（秒） */
         private Integer asyncPollSeconds = 1;
+        /** 受理结果缓存 TTL（分钟） */
+        private Integer resultTtlMinutes = 30;
     }
 
     @Data
@@ -42,8 +44,8 @@ public class TktProperties {
 
     @Data
     public static class Cache {
-        /** 票档缓存 TTL（秒） */
-        private Integer tierTtlSeconds = 60;
+        /** 演出/场次/票档元数据 Redis TTL（秒）；默认 7 天；管理端写后 SET 刷新 */
+        private Integer metaTtlSeconds = 7 * 24 * 3600;
     }
 
     @Data

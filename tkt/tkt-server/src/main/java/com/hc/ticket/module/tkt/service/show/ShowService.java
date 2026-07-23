@@ -6,6 +6,9 @@ import com.hc.ticket.module.tkt.controller.admin.show.vo.ShowPageReqVO;
 import com.hc.ticket.module.tkt.controller.admin.show.vo.ShowPageRespVO;
 import com.hc.ticket.module.tkt.controller.admin.show.vo.ShowRespVO;
 import com.hc.ticket.module.tkt.controller.admin.show.vo.ShowUpdateReqVO;
+import com.hc.ticket.module.tkt.controller.app.show.vo.AppShowPageReqVO;
+import com.hc.ticket.module.tkt.controller.app.show.vo.AppShowPageRespVO;
+import com.hc.ticket.module.tkt.controller.app.show.vo.AppShowRespVO;
 import com.hc.ticket.module.tkt.dal.dataobject.show.ShowDO;
 
 /**
@@ -22,6 +25,12 @@ public interface ShowService {
     ShowRespVO getShow(Long id);
 
     PageResult<ShowPageRespVO> getShowPage(ShowPageReqVO reqVO);
+
+    /** C 端：已发布演出分页 */
+    PageResult<AppShowPageRespVO> getAppShowPage(AppShowPageReqVO reqVO);
+
+    /** C 端：已发布演出详情 */
+    AppShowRespVO getAppShow(Long id);
 
     /**
      * 校验演出存在，返回 DO

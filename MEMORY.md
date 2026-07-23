@@ -37,14 +37,18 @@
 4. `docs/业务逻辑文档-抢票票务平台.md`
 5. `docs/设计文档-抢票票务平台.md`
 6. `docs/高并发能力地图与扩展架构-抢票票务平台.md`
+7. `docs/开发计划-抢票票务平台剩余工作.md`
+8. `docs/用户浏览与抢票全链路说明.md`
 
 ### 4.3 数据库脚本
 1. `schema-ticket-mysql8.sql`
+2. `seed-ticket-demo.sql`
 
 ### 4.4 后端工程（代码）
 1. 根 `pom.xml`（多模块父工程）
 2. `tkt/tkt-api`：枚举、错误码、API 常量
-3. `tkt/tkt-server`：启动类、框架公共类、DO/Mapper、管理端 CRUD（演出/场次/票档 + 订单只读）、MQ/Job 骨架、探活接口
+3. `tkt/tkt-server`：启动类、框架公共类、DO/Mapper、管理端 CRUD、C 端只读（演出/场次）、MQ/Job 骨架
+4. `docker-compose.yml`：本地 MySQL + Redis
 
 ### 4.5 运行记忆与纠错文档
 1. `MEMORY.md`
@@ -56,6 +60,17 @@
 - 若业务范围变更，优先更新“项目定位”“当前业务结论”和“文档索引”。
 
 ## 6. 最近更新记录
+- 2026-07-23：全链路说明升至 v1.5——补管理端预热写路径表/图，明确 TTL 7 天与 warmSession、miss 仅兜底。
+- 2026-07-23：元数据 TTL 改为 7 天；管理端写后 SET/`warmSession` 预热（场次+演出+票档）；删除才 DEL；全链路文档 v1.4。
+- 2026-07-23：元数据缓存由 Caffeine 迁至 Redis（`tkt:meta:show/session/tier`）；写后 DEL、TTL 60s；票档剔除 sold/version；全链路文档 v1.3。
+- 2026-07-23：`docs/用户浏览与抢票全链路说明.md` 升至 v1.2，增补浏览/校验/预扣/建单/轮询等多张流程图。
+- 2026-07-23：更新 `docs/用户浏览与抢票全链路说明.md` 至 v1.1（元数据 Caffeine 分层、时序图、校验数据来源）。
+- 2026-07-23：抢票元数据本地缓存——Caffeine TTL 60s（show/session/tier）；`validate*Exists` 与场次详情共用；管理端改写主动 Evict；票档列表余票仍直查 DB。
+- 2026-07-23：新增 `docs/用户浏览与抢票全链路说明.md`（结合代码说明浏览→抢票→轮询→查单）。
+- 2026-07-23：落地 P2 抢票主链路——Redis Lua 预扣/回补、受理令牌轮询、幂等与限购、`sold_stock` 条件更新 + 流水；默认同步建单，`mq` profile 走 RocketMQ。
+- 2026-07-23：`SessionServiceImpl` 去掉 try-catch 吞异常；C 端场次详情改为 if 校验 + 错误码，直查 DB。
+- 2026-07-23：落地 P0/P1——`docker-compose.yml`、演示种子数据、C 端演出/场次只读接口（场次详情 Redis 短缓存）；更新开发计划进度与附录。
+- 2026-07-22：新增 `docs/开发计划-抢票票务平台剩余工作.md`（P0～P6 分期：环境、C 端只读、抢票主链路、支付履约、关单对账、治理压测、扩展项）。
 - 2026-07-22：落地管理端 CRUD（Show/Session/Tier 增删改查分页；Order 只读详情+分页），遵循 `docs/CRUD开发流程规范.md`；补 `BeanUtils.toBean`、票档库存校验错误码 `TIER_STOCK_INVALID`。
 - 2026-07-22：落地后端脚手架（Java 17 / Spring Boot 3.3 / `tkt-api`+`tkt-server`）；含 DO/Mapper、错误码与枚举、RocketMQ 消费者骨架（默认关闭）、关单 Job 占位、探活接口；`mvn -DskipTests package` 通过。
 - 2026-05-10：初始化 Git 仓库并推送到远程 `git@github.com:Pderi/High-Concurrency-Project.git`（默认分支 `main`）；新增根目录 `.gitignore`（忽略 `.idea/` 与常见构建产物）。

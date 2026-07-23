@@ -24,6 +24,14 @@
 
 ## 4. 错误记录
 
+### [2026-07-23] 业务层用 try-catch 吞掉缓存异常
+- 场景：C 端场次详情 Redis 短缓存。
+- 错误现象：`SessionServiceImpl` 用 try-catch 降级，失败只打日志，与项目「不满足条件抛错误码」风格不一致。
+- 根因分析：把基础设施失败当成可忽略分支，而不是显式校验 + 业务错误码。
+- 修复动作：去掉 try-catch；详情直查 DB，用 `if` + `SESSION_NOT_EXISTS` 等错误码；缓存失效留空待 P2。
+- 预防措施（下次如何避免）：Service 层禁止 try-catch 吞异常；分支用 `if`，失败 `throw exception(ErrorCode)`。
+- 状态：已修复
+
 ### [2026-07-22] MyBatis-Plus 3.5.9 分页插件类找不到
 - 场景：搭建 `tkt-server` 脚手架编译。
 - 错误现象：`PaginationInnerInterceptor` 找不到（`com.baomidou.mybatisplus.extension.plugins.inner`）。
@@ -46,3 +54,4 @@
 - [ ] 文档路径与索引是否同步更新
 - [ ] 是否出现了与规则冲突的表达或结构
 - [ ] MyBatis-Plus >=3.5.9 是否已引入 `mybatis-plus-jsqlparser`（分页/乐观锁拦截器）
+- [ ] Service 层是否避免 try-catch 吞异常；业务分支是否用 `if` + `throw exception(错误码)`
