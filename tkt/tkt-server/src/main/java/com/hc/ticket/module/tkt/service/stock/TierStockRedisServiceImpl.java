@@ -2,6 +2,7 @@ package com.hc.ticket.module.tkt.service.stock;
 
 import com.hc.ticket.module.tkt.dal.dataobject.tier.TierDO;
 import com.hc.ticket.module.tkt.dal.mysql.tier.TierMapper;
+import com.hc.ticket.module.tkt.metrics.TktMetrics;
 import com.hc.ticket.module.tkt.redis.TktRedisKeys;
 import jakarta.annotation.Resource;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -37,6 +38,8 @@ public class TierStockRedisServiceImpl implements TierStockRedisService {
     private StringRedisTemplate stringRedisTemplate;
     @Resource
     private TierMapper tierMapper;
+    @Resource
+    private TktMetrics tktMetrics;
 
     @Override
     public void ensureRemainInitialized(Long tierId) {
@@ -60,11 +63,14 @@ public class TierStockRedisServiceImpl implements TierStockRedisService {
         List<String> keys = Collections.singletonList(TktRedisKeys.tierRemain(tierId));
         Long result = stringRedisTemplate.execute(DEDUCT_SCRIPT, keys, String.valueOf(quantity));
         if (result == null || result == -1L) {
+            tktMetrics.recordDeductNotReady();
             throw exception(REDIS_STOCK_NOT_READY);
         }
         if (result == 0L) {
+            tktMetrics.recordDeductSoldOut();
             throw exception(TIER_SOLD_OUT);
         }
+        tktMetrics.recordDeductSuccess();
     }
 
     @Override
@@ -73,5 +79,18 @@ public class TierStockRedisServiceImpl implements TierStockRedisService {
             return;
         }
         stringRedisTemplate.opsForValue().increment(TktRedisKeys.tierRemain(tierId), quantity);
+    }
+
+    @Override
+    public void syncRemainFromDb(Long tierId) {
+        if (tierId == null) {
+            return;
+        }
+        TierDO tier = tierMapper.selectById(tierId);
+        if (tier == null) {
+            throw exception(TIER_NOT_EXISTS);
+        }
+        int remain = Math.max(tier.getTotalStock() - tier.getSoldStock(), 0);
+        stringRedisTemplate.opsForValue().set(TktRedisKeys.tierRemain(tierId), String.valueOf(remain));
     }
 }

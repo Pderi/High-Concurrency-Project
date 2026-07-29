@@ -21,4 +21,9 @@ public interface TierStockRedisService {
      * 回补余量
      */
     void rollback(Long tierId, int quantity);
+
+    /**
+     * 将 Redis 余量强制同步为 totalStock - soldStock（对账修正用）
+     */
+    void syncRemainFromDb(Long tierId);
 }

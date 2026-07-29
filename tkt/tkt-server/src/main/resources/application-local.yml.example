@@ -18,3 +18,10 @@ spring:
 logging:
   level:
     com.hc.ticket: DEBUG
+
+# 可选覆盖
+# tkt:
+#   rate-limit:
+#     enabled: false
+#   admin:
+#     token: your-local-token

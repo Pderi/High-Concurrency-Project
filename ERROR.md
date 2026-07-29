@@ -24,6 +24,14 @@
 
 ## 4. 错误记录
 
+### [2026-07-29] LambdaQueryWrapperX 链式混用 eq 导致编译失败
+- 场景：P3 新增 `selectAppPage`，先 `.eq(userId)` 再 `.eqIfPresent(...)`。
+- 错误现象：编译报找不到 `eqIfPresent`（接收类型变成父类 `LambdaQueryWrapper`）。
+- 根因分析：父类 `eq` 返回 `LambdaQueryWrapper`，丢失子类扩展方法。
+- 修复动作：统一用 `eqIfPresent`（或先保证返回类型为 `LambdaQueryWrapperX`）。
+- 预防措施（下次如何避免）：`LambdaQueryWrapperX` 链上避免直接调用父类 `eq/like` 后再接 `*IfPresent`。
+- 状态：已修复
+
 ### [2026-07-23] 业务层用 try-catch 吞掉缓存异常
 - 场景：C 端场次详情 Redis 短缓存。
 - 错误现象：`SessionServiceImpl` 用 try-catch 降级，失败只打日志，与项目「不满足条件抛错误码」风格不一致。
@@ -55,3 +63,4 @@
 - [ ] 是否出现了与规则冲突的表达或结构
 - [ ] MyBatis-Plus >=3.5.9 是否已引入 `mybatis-plus-jsqlparser`（分页/乐观锁拦截器）
 - [ ] Service 层是否避免 try-catch 吞异常；业务分支是否用 `if` + `throw exception(错误码)`
+- [ ] `LambdaQueryWrapperX` 链上是否避免父类 `eq` 后再接 `*IfPresent`（保持 X 类型）

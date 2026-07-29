@@ -36,4 +36,21 @@ public interface TierMapper extends BaseMapperX<TierDO> {
             + "update_time = NOW() "
             + "WHERE id = #{id} AND deleted = 0 AND sold_stock + #{qty} <= total_stock")
     int increaseSoldStock(@Param("id") Long id, @Param("qty") int qty);
+
+    /**
+     * 条件减少 sold_stock（超时关单 / 对账），防止减成负数
+     *
+     * @return 影响行数，0 表示库存不足或并发失败
+     */
+    @Update("UPDATE tkt_tier SET sold_stock = sold_stock - #{qty}, version = version + 1, "
+            + "update_time = NOW() "
+            + "WHERE id = #{id} AND deleted = 0 AND sold_stock >= #{qty}")
+    int decreaseSoldStock(@Param("id") Long id, @Param("qty") int qty);
+
+    /**
+     * 对账修正 sold_stock 为目标值
+     */
+    @Update("UPDATE tkt_tier SET sold_stock = #{soldStock}, version = version + 1, update_time = NOW() "
+            + "WHERE id = #{id} AND deleted = 0")
+    int updateSoldStock(@Param("id") Long id, @Param("soldStock") int soldStock);
 }

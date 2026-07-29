@@ -10,6 +10,7 @@ import com.hc.ticket.module.tkt.dal.mysql.tier.TierMapper;
 import com.hc.ticket.module.tkt.enums.OrderStatusEnum;
 import com.hc.ticket.module.tkt.enums.PayChannelEnum;
 import com.hc.ticket.module.tkt.enums.StockChangeTypeEnum;
+import com.hc.ticket.module.tkt.metrics.TktMetrics;
 import com.hc.ticket.module.tkt.mq.message.OrderCreateMessage;
 import jakarta.annotation.Resource;
 import org.springframework.dao.DuplicateKeyException;
@@ -40,10 +41,24 @@ public class OrderCreateServiceImpl implements OrderCreateService {
     private StockLedgerMapper stockLedgerMapper;
     @Resource
     private TktProperties tktProperties;
+    @Resource
+    private TktMetrics tktMetrics;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public CreateOrderResult createOrder(OrderCreateMessage message) {
+        long start = System.nanoTime();
+        try {
+            CreateOrderResult result = doCreateOrder(message);
+            tktMetrics.recordOrderCreateSuccess(System.nanoTime() - start);
+            return result;
+        } catch (RuntimeException ex) {
+            tktMetrics.recordOrderCreateFail();
+            throw ex;
+        }
+    }
+
+    private CreateOrderResult doCreateOrder(OrderCreateMessage message) {
         if (StringUtils.hasText(message.getIdempotencyKey())) {
             OrderDO exists = orderMapper.selectByIdempotency(
                     message.getUserId(), message.getSessionId(), message.getTierId(), message.getIdempotencyKey());

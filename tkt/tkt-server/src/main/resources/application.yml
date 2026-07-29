@@ -40,10 +40,13 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info
+        include: health,info,prometheus,metrics
   endpoint:
     health:
       show-details: always
+  metrics:
+    tags:
+      application: ${spring.application.name}
 
 springdoc:
   api-docs:
@@ -60,12 +63,23 @@ tkt:
   job:
     close-order:
       batch-size: 100
+    reconcile:
+      enabled: true
   cache:
     meta-ttl-seconds: 604800
   rocketmq:
     enabled: false
+  rate-limit:
+    enabled: true
+    limit-for-period: 100
+    limit-refresh-period-seconds: 1
+  admin:
+    auth-enabled: true
+    token: dev-admin-token
 
 logging:
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} [traceId=%X{traceId}] [orderNo=%X{orderNo}] - %msg%n"
   level:
     com.hc.ticket: INFO
     com.hc.ticket.module.tkt.dal.mysql: DEBUG

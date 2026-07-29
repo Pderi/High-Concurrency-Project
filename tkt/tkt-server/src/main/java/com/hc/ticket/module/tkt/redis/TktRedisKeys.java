@@ -32,4 +32,14 @@ public final class TktRedisKeys {
     public static String metaTier(Long tierId) {
         return "tkt:meta:tier:" + tierId;
     }
+
+    /** 超时关单 Job 分布式锁 */
+    public static String jobCloseOrder() {
+        return "tkt:job:close-order";
+    }
+
+    /** 对账 Job 分布式锁 */
+    public static String jobReconcile() {
+        return "tkt:job:reconcile";
+    }
 }

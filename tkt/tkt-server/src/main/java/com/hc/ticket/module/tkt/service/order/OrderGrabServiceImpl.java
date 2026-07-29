@@ -16,12 +16,16 @@ import com.hc.ticket.module.tkt.enums.ShowStatusEnum;
 import com.hc.ticket.module.tkt.enums.TierStatusEnum;
 import com.hc.ticket.module.tkt.mq.message.OrderCreateMessage;
 import com.hc.ticket.module.tkt.mq.producer.OrderCreatePublisher;
+import com.hc.ticket.module.tkt.service.ratelimit.GrabRateLimitService;
 import com.hc.ticket.module.tkt.service.session.SessionService;
 import com.hc.ticket.module.tkt.service.show.ShowService;
 import com.hc.ticket.module.tkt.service.stock.TierStockRedisService;
 import com.hc.ticket.module.tkt.service.tier.TierService;
+import com.hc.ticket.framework.web.TraceIdFilter;
 import jakarta.annotation.Resource;
+import org.slf4j.MDC;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import org.springframework.validation.annotation.Validated;
 
 import java.time.LocalDateTime;
@@ -56,9 +60,12 @@ public class OrderGrabServiceImpl implements OrderGrabService {
     private GrabResultService grabResultService;
     @Resource
     private TktProperties tktProperties;
+    @Resource
+    private GrabRateLimitService grabRateLimitService;
 
     @Override
     public AppOrderGrabRespVO grab(Long userId, AppOrderGrabReqVO reqVO) {
+        grabRateLimitService.checkPermit();
         if (userId == null) {
             throw exception(USER_ID_REQUIRED);
         }
@@ -116,6 +123,9 @@ public class OrderGrabServiceImpl implements OrderGrabService {
         String orderNo = null;
         if (GrabResultStatusEnum.SUCCESS.getStatus().equals(result.getStatus())) {
             orderNo = result.getOrderNo();
+        }
+        if (StringUtils.hasText(orderNo)) {
+            MDC.put(TraceIdFilter.MDC_ORDER_NO, orderNo);
         }
         return buildResp(acceptToken, orderNo);
     }
