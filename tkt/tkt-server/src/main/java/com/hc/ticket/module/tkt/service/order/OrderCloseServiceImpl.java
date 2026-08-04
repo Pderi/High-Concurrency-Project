@@ -10,6 +10,7 @@ import com.hc.ticket.module.tkt.enums.OrderStatusEnum;
 import com.hc.ticket.module.tkt.enums.StockChangeTypeEnum;
 import com.hc.ticket.module.tkt.metrics.TktMetrics;
 import com.hc.ticket.module.tkt.service.stock.TierStockRedisService;
+import com.hc.ticket.module.tkt.service.stock.UserBuyLimitRedisService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -33,6 +34,8 @@ public class OrderCloseServiceImpl implements OrderCloseService {
     private StockLedgerMapper stockLedgerMapper;
     @Resource
     private TierStockRedisService tierStockRedisService;
+    @Resource
+    private UserBuyLimitRedisService userBuyLimitRedisService;
     @Resource
     private PlatformTransactionManager transactionManager;
     @Resource
@@ -89,8 +92,15 @@ public class OrderCloseServiceImpl implements OrderCloseService {
             try {
                 tierStockRedisService.rollback(closed.getTierId(), closed.getQuantity());
             } catch (Exception ex) {
-                log.error("[OrderClose] redis rollback failed orderId={} tierId={}",
+                log.error("[OrderClose] redis stock rollback failed orderId={} tierId={}",
                         orderId, closed.getTierId(), ex);
+            }
+            try {
+                userBuyLimitRedisService.rollback(
+                        closed.getUserId(), closed.getSessionId(), closed.getTierId(), closed.getQuantity());
+            } catch (Exception ex) {
+                log.error("[OrderClose] redis buy-limit rollback failed orderId={} userId={} tierId={}",
+                        orderId, closed.getUserId(), closed.getTierId(), ex);
             }
         }
         return true;

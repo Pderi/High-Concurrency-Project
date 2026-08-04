@@ -36,6 +36,7 @@ public interface ErrorCodeConstants {
     ErrorCode USER_ID_REQUIRED = new ErrorCode(1_010_007_002, "用户未登录");
     ErrorCode REDIS_STOCK_NOT_READY = new ErrorCode(1_010_007_003, "库存缓存未就绪，请稍后重试");
     ErrorCode ORDER_CREATE_FAILED = new ErrorCode(1_010_007_004, "建单失败，库存已回补");
+    ErrorCode REDIS_BUY_LIMIT_NOT_READY = new ErrorCode(1_010_007_005, "限购缓存未就绪，请稍后重试");
 
     // ========== 管理端鉴权 1_010_008_xxx ==========
     ErrorCode ADMIN_UNAUTHORIZED = new ErrorCode(1_010_008_000, "管理端未授权");

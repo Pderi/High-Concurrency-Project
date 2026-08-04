@@ -4,6 +4,7 @@ import com.hc.ticket.module.tkt.constants.ApiConstants;
 import com.hc.ticket.module.tkt.mq.message.OrderCreateMessage;
 import com.hc.ticket.module.tkt.service.order.GrabResultService;
 import com.hc.ticket.module.tkt.service.stock.TierStockRedisService;
+import com.hc.ticket.module.tkt.service.stock.UserBuyLimitRedisService;
 import jakarta.annotation.Resource;
 import org.apache.rocketmq.spring.core.RocketMQTemplate;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -22,6 +23,8 @@ public class MqOrderCreatePublisher implements OrderCreatePublisher {
     @Resource
     private TierStockRedisService tierStockRedisService;
     @Resource
+    private UserBuyLimitRedisService userBuyLimitRedisService;
+    @Resource
     private GrabResultService grabResultService;
 
     @Override
@@ -32,6 +35,8 @@ public class MqOrderCreatePublisher implements OrderCreatePublisher {
                     MessageBuilder.withPayload(message).build());
         } catch (RuntimeException ex) {
             tierStockRedisService.rollback(message.getTierId(), message.getQuantity());
+            userBuyLimitRedisService.rollback(
+                    message.getUserId(), message.getSessionId(), message.getTierId(), message.getQuantity());
             grabResultService.saveFail(message.getMessageId(), 500, "消息投递失败");
             throw ex;
         }

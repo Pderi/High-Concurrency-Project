@@ -7,6 +7,7 @@ import com.hc.ticket.module.tkt.service.order.CreateOrderResult;
 import com.hc.ticket.module.tkt.service.order.GrabResultService;
 import com.hc.ticket.module.tkt.service.order.OrderCreateService;
 import com.hc.ticket.module.tkt.service.stock.TierStockRedisService;
+import com.hc.ticket.module.tkt.service.stock.UserBuyLimitRedisService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
@@ -32,6 +33,8 @@ public class OrderCreateConsumer implements RocketMQListener<OrderCreateMessage>
     private GrabResultService grabResultService;
     @Resource
     private TierStockRedisService tierStockRedisService;
+    @Resource
+    private UserBuyLimitRedisService userBuyLimitRedisService;
 
     @Override
     public void onMessage(OrderCreateMessage message) {
@@ -40,13 +43,19 @@ public class OrderCreateConsumer implements RocketMQListener<OrderCreateMessage>
         try {
             CreateOrderResult result = orderCreateService.createOrder(message);
             if (result.isRollbackRedis()) {
-                tierStockRedisService.rollback(message.getTierId(), message.getQuantity());
+                rollbackRedisOccupy(message);
             }
             grabResultService.saveSuccess(message.getMessageId(), result.getOrderNo());
         } catch (ServiceException ex) {
-            tierStockRedisService.rollback(message.getTierId(), message.getQuantity());
+            rollbackRedisOccupy(message);
             grabResultService.saveFail(message.getMessageId(), ex.getCode(), ex.getMessage());
             throw ex;
         }
+    }
+
+    private void rollbackRedisOccupy(OrderCreateMessage message) {
+        tierStockRedisService.rollback(message.getTierId(), message.getQuantity());
+        userBuyLimitRedisService.rollback(
+                message.getUserId(), message.getSessionId(), message.getTierId(), message.getQuantity());
     }
 }

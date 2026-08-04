@@ -20,6 +20,7 @@ import com.hc.ticket.module.tkt.service.ratelimit.GrabRateLimitService;
 import com.hc.ticket.module.tkt.service.session.SessionService;
 import com.hc.ticket.module.tkt.service.show.ShowService;
 import com.hc.ticket.module.tkt.service.stock.TierStockRedisService;
+import com.hc.ticket.module.tkt.service.stock.UserBuyLimitRedisService;
 import com.hc.ticket.module.tkt.service.tier.TierService;
 import com.hc.ticket.framework.web.TraceIdFilter;
 import jakarta.annotation.Resource;
@@ -54,6 +55,8 @@ public class OrderGrabServiceImpl implements OrderGrabService {
     private TierService tierService;
     @Resource
     private TierStockRedisService tierStockRedisService;
+    @Resource
+    private UserBuyLimitRedisService userBuyLimitRedisService;
     @Resource
     private OrderCreatePublisher orderCreatePublisher;
     @Resource
@@ -99,10 +102,6 @@ public class OrderGrabServiceImpl implements OrderGrabService {
         if (reqVO.getQuantity() > tier.getPerUserLimit()) {
             throw exception(USER_BUY_LIMIT_EXCEEDED);
         }
-        int used = orderMapper.sumActiveQuantity(userId, session.getId(), tier.getId());
-        if (used + reqVO.getQuantity() > tier.getPerUserLimit()) {
-            throw exception(USER_BUY_LIMIT_EXCEEDED);
-        }
 
         String acceptToken = UUID.randomUUID().toString().replace("-", "");
         OrderCreateMessage message = new OrderCreateMessage();
@@ -115,7 +114,16 @@ public class OrderGrabServiceImpl implements OrderGrabService {
         message.setIdempotencyKey(reqVO.getIdempotencyKey());
         message.setRedisToken(acceptToken);
 
-        tierStockRedisService.deduct(tier.getId(), reqVO.getQuantity());
+        // 限购占用（Redis 为主，miss 回源 MySQL）→ 库存预扣；库存失败则回补限购
+        userBuyLimitRedisService.tryAcquire(
+                userId, session.getId(), tier.getId(), reqVO.getQuantity(), tier.getPerUserLimit());
+        try {
+            tierStockRedisService.deduct(tier.getId(), reqVO.getQuantity());
+        } catch (RuntimeException ex) {
+            userBuyLimitRedisService.rollback(
+                    userId, session.getId(), tier.getId(), reqVO.getQuantity());
+            throw ex;
+        }
         grabResultService.savePending(acceptToken);
         orderCreatePublisher.publish(message);
 

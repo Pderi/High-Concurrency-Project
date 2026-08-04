@@ -13,6 +13,13 @@ public final class TktRedisKeys {
         return "tkt:tier:remain:" + tierId;
     }
 
+    /**
+     * 用户在某场次票档下的有效占用张数（待支付 + 已支付）
+     */
+    public static String userBuyLimitUsed(Long userId, Long sessionId, Long tierId) {
+        return "tkt:limit:used:" + userId + ":" + sessionId + ":" + tierId;
+    }
+
     /** 抢票受理结果（轮询） */
     public static String grabResult(String acceptToken) {
         return "tkt:grab:result:" + acceptToken;
